@@ -1,0 +1,22 @@
+{
+  "name": "whatsapp-invoice-generator",
+  "version": "1.0.0",
+  "description": "WhatsApp Invoice Generator Bot",
+  "main": "src/bot.ts",
+  "type": "module",
+  "scripts": {
+    "start": "bun run src/bot.ts",
+    "start:node": "ts-node src/bot.ts"
+  },
+  "dependencies": {
+    "pdfkit": "^0.15.0",
+    "qrcode-terminal": "^0.12.0",
+    "whatsapp-web.js": "^1.34.7"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "@types/pdfkit": "^0.13.3",
+    "@types/qrcode-terminal": "^0.12.2",
+    "typescript": "^5.3.3"
+  }
+}
