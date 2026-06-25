@@ -180,6 +180,32 @@ async function runTests() {
     process.exit(1);
   }
   console.log(`PASS: Custom PDF successfully generated and automatically cleaned up from disk`);
+  replies.length = 0; // Ensure replies are cleared before starting Step 17
+  // Step 17: Finance Tracking Test
+  await controller.handleMessage(userId, "/pemasukan", replyFn);
+  if (!replies[0].text.includes("Masukkan nominal Pemasukan")) {
+    console.error("FAIL: Expected Pemasukan prompt, got:", replies[0].text);
+    process.exit(1);
+  }
+  replies.length = 0;
+
+  await controller.handleMessage(userId, "1000000", replyFn);
+  replies.length = 0;
+  await controller.handleMessage(userId, "Gaji", replyFn); // Category
+  replies.length = 0;
+  await controller.handleMessage(userId, "Gaji Juni", replyFn); // Note
+  if (!replies[0].text.includes("✓ Catatan *Pemasukan* berhasil disimpan")) {
+    console.error("FAIL: Expected finance success message, got:", replies[0].text);
+    process.exit(1);
+  }
+  replies.length = 0;
+
+  await controller.handleMessage(userId, "/laporan", replyFn);
+  if (!replies[0].text.includes("*Total Pemasukan:* Rp 1.000.000")) {
+    console.error("FAIL: Expected laporan income 1.000.000, got:", replies[0].text);
+    process.exit(1);
+  }
+  console.log("PASS: Finance tracking integration verified");
   replies.length = 0;
 
   controller.destroy();

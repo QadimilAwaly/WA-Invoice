@@ -2,8 +2,11 @@ export type SessionStep =
   | 'idle'
   | 'waiting_invoice_template'
   | 'waiting_setting_template'
+  | 'waiting_finance_type'
+  | 'waiting_finance_amount'
+  | 'waiting_finance_category'
+  | 'waiting_finance_note'
   | 'confirm';
-
 export interface InvoiceItem {
   name: string;
   qty: number;
@@ -19,9 +22,12 @@ export interface InvoiceSession {
   tax: number; // raw value or decimal percentage (e.g. 0.11 for 11%)
   taxIsPercentage: boolean;
   paid: number; // Amount paid/down payment
+  financeType?: 'income' | 'expense';
+  financeAmount?: number;
+  financeCategory?: string;
+  financeNote?: string;
   lastActive: number; // Date.now() timestamp
 }
-
 export class SessionManager {
   private sessions = new Map<string, InvoiceSession>();
 
@@ -80,6 +86,10 @@ export class SessionManager {
       tax: 0,
       taxIsPercentage: false,
       paid: 0,
+      financeType: undefined,
+      financeAmount: undefined,
+      financeCategory: undefined,
+      financeNote: undefined,
       lastActive: Date.now()
     };
   }

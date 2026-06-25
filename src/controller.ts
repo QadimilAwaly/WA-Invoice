@@ -7,12 +7,13 @@ import {
 } from './utils.js';
 import { generateInvoicePdf, type InvoiceData } from './pdf.js';
 import { SettingsManager } from './settings.js';
+import { FinanceManager } from './finance.js';
 import path from 'path';
 import fs from 'fs';
-
 export class InvoiceBotController {
   private sessionManager = new SessionManager();
   private settingsManager = new SettingsManager();
+  private financeManager = new FinanceManager();
   private inactivityInterval: NodeJS.Timeout | null = null;
 
   constructor() {
@@ -43,6 +44,7 @@ export class InvoiceBotController {
   ): Promise<void> {
     const text = body.trim();
     const textLower = text.toLowerCase();
+    const session = this.sessionManager.getSession(userId);
 
     // Command overrides
     if (textLower === '/batal') {
@@ -56,6 +58,9 @@ export class InvoiceBotController {
         `*=== WhatsApp Invoice Generator ===*\n\n` +
         `Berikut perintah yang tersedia:\n` +
         `* \`/buat\` atau \`/invoice\` - Mulai buat invoice baru\n` +
+        `* \`/pemasukan\` - Catat pemasukan baru\n` +
+        `* \`/pengeluaran\` - Catat pengeluaran baru\n` +
+        `* \`/laporan\` - Lihat ringkasan keuangan bulan ini\n` +
         `* \`/pengaturan\` - Buka menu pengaturan bot (Nama Toko, Bank, dll)\n` +
         `* \`/batal\` - Batalkan proses pembuatan invoice aktif atau keluar dari menu\n` +
         `* \`/help\` - Tampilkan menu bantuan ini\n\n` +
@@ -64,7 +69,30 @@ export class InvoiceBotController {
       return;
     }
 
-    const session = this.sessionManager.getSession(userId);
+    // Pemasukan / Pengeluaran Command overrides
+    if (textLower === '/pemasukan' || textLower === '/pengeluaran') {
+      if (session.step !== 'idle') {
+        await reply('⚠️ Sesi pembuatan invoice sedang aktif. Selesaikan invoice Anda terlebih dahulu, atau ketik */batal* untuk membatalkan.');
+        return;
+      }
+      this.sessionManager.updateSession(userId, { 
+        step: 'waiting_finance_amount', 
+        financeType: textLower === '/pemasukan' ? 'income' : 'expense' 
+      });
+      await reply(`Masukkan nominal ${textLower === '/pemasukan' ? 'Pemasukan' : 'Pengeluaran'}:`);
+      return;
+    }
+
+    if (textLower === '/laporan') {
+      const summary = this.financeManager.getMonthlySummary(userId);
+      await reply(
+        `*=== Laporan Keuangan Bulan Ini ===*\n\n` +
+        `*Total Pemasukan:* Rp ${summary.income.toLocaleString('id-ID')}\n` +
+        `*Total Pengeluaran:* Rp ${summary.expense.toLocaleString('id-ID')}\n` +
+        `*Saldo Bersih:* Rp ${summary.balance.toLocaleString('id-ID')}`
+      );
+      return;
+    }
 
     // Settings template command override from idle
     if (textLower === '/pengaturan' || textLower === '/setting') {
@@ -80,14 +108,14 @@ export class InvoiceBotController {
         '#9B2C2C': 'Maroon Red',
         '#2D3748': 'Charcoal Gray'
       };
-      const themeName = themeNames[settings.themeColor] || 'Custom';
-
+      
       const themeCodes: Record<string, string> = {
         '#1A365D': '1',
         '#059669': '2',
         '#9B2C2C': '3',
         '#2D3748': '4'
       };
+      const themeName = themeNames[settings.themeColor] || 'Custom';
       const themeCode = themeCodes[settings.themeColor] || '1';
 
       await reply(
@@ -192,6 +220,37 @@ export class InvoiceBotController {
           `*Sisa Tagihan:* Rp ${balanceDue.toLocaleString('id-ID')} (*${status}*)\n\n` +
           `Ketik *ya* untuk generate PDF & kirim invoice, atau ketik */batal* untuk membatalkan.`
         );
+        break;
+      }
+
+      case 'waiting_finance_amount': {
+        const amount = parsePriceAdvanced(text);
+        if (isNaN(amount) || amount <= 0) {
+          await reply('⚠️ Nominal tidak valid. Masukkan angka yang lebih besar dari 0.');
+          return;
+        }
+        this.sessionManager.updateSession(userId, { step: 'waiting_finance_category', financeAmount: amount });
+        await reply('Masukkan kategori (misal: Penjualan, Makan, Transport):');
+        break;
+      }
+
+      case 'waiting_finance_category': {
+        this.sessionManager.updateSession(userId, { step: 'waiting_finance_note', financeCategory: text });
+        await reply('Masukkan catatan singkat (opsional):');
+        break;
+      }
+
+      case 'waiting_finance_note': {
+        const note = text;
+        const { financeType, financeAmount, financeCategory } = session;
+        if (financeType && financeAmount !== undefined && financeCategory) {
+          this.financeManager.addRecord(userId, financeType, financeAmount, financeCategory, note);
+          this.sessionManager.clearSession(userId);
+          await reply(`✓ Catatan *${financeType === 'income' ? 'Pemasukan' : 'Pengeluaran'}* berhasil disimpan.`);
+        } else {
+          this.sessionManager.clearSession(userId);
+          await reply('⚠️ Terjadi kesalahan data keuangan. Sesi dibatalkan.');
+        }
         break;
       }
 

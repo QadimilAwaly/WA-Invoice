@@ -9,10 +9,11 @@ WhatsApp Invoice Generator Bot adalah aplikasi berbasis Node.js/Bun yang memungk
 1. **Alur Interaktif (State Machine)**: Memandu pembuatan invoice dari input nama pelanggan, daftar item belanja, diskon, pajak, hingga jumlah dibayar (DP/Lunas).
 2. **Parser Harga Fleksibel**: Menerima berbagai format penulisan mata uang Rupiah Indonesia (contoh: `Rp 15.000`, `15,000.50`, `1.250.000`, `15000`).
 3. **Kalkulasi & Status Pembayaran Otomatis**: Mendukung diskon, pajak, nominal pembayaran (Dibayar/DP), menghitung sisa tagihan, serta menandai status invoice secara otomatis sebagai **LUNAS** atau **BELUM LUNAS**.
-4. **Template PDF Profesional**: Menggunakan `pdfkit` untuk menggambar file invoice berformat A4 dengan desain yang elegan (Navy Blue, Emerald Green, dll) yang memuat info toko, pelanggan, status pembayaran, dan rincian transaksi yang terstruktur rapi.
-5. **Kustomisasi via Chatbot**: Memungkinkan kustomisasi Nama Toko, Email Toko, Rekening/Info Pembayaran, dan Warna Tema secara dinamis melalui menu `/pengaturan`.
-6. **Auto Cleanup**: Sesi pembuatan invoice akan otomatis dihapus jika pengguna tidak aktif selama 10 menit.
-7. **Command Mudah**: Mendukung perintah pintas seperti `/buat` (atau `/invoice`), `/pengaturan` (atau `/setting`), `/batal`, `/help`, dan `/menu`.
+4. **Pencatatan Keuangan**: Mendukung perintah `/pemasukan`, `/pengeluaran`, dan `/laporan` untuk mencatat transaksi dan melihat saldo bulanan.
+5. **Template PDF Profesional**: Menggunakan `pdfkit` untuk menggambar file invoice berformat A4 dengan desain yang elegan (Navy Blue, Emerald Green, dll) yang memuat info toko, pelanggan, status pembayaran, dan rincian transaksi yang terstruktur rapi.
+6. **Kustomisasi via Chatbot**: Memungkinkan kustomisasi Nama Toko, Email Toko, Rekening/Info Pembayaran, dan Warna Tema secara dinamis melalui menu `/pengaturan`.
+7. **Auto Cleanup**: Sesi pembuatan invoice akan otomatis dihapus jika pengguna tidak aktif selama 10 menit.
+8. **Command Mudah**: Mendukung perintah pintas seperti `/buat` (atau `/invoice`), `/pemasukan`, `/pengeluaran`, `/laporan`, `/pengaturan` (atau `/setting`), `/batal`, `/help`, dan `/menu`.
 ---
 
 ## Prasyarat
@@ -108,32 +109,30 @@ Seluruh pengaturan ini akan disimpan secara otomatis per nomor WhatsApp pengguna
 
 ## Menjalankan Unit & Integration Test
 
-Aplikasi ini dilengkapi dengan test suite lengkap untuk memvalidasi parser harga, managemen sesi, pembuatan PDF, dan alur percakapan (state machine):
+Aplikasi ini dilengkapi dengan test suite lengkap untuk memvalidasi parser harga, managemen sesi, pembuatan PDF, alur percakapan (state machine), serta fitur keuangan:
 
 Menjalankan seluruh pengujian:
 ```bash
-bun run tests/utils.test.ts && bun run tests/session.test.ts && bun run tests/pdf.test.ts && bun run tests/controller.test.ts
+bun run tests/utils.test.ts && bun run tests/session.test.ts && bun run tests/pdf.test.ts && bun run tests/finance.test.ts && bun run tests/controller.test.ts
 ```
 
 ---
 
-## Struktur File Proyek
-
-```text
 ├── src/
 │   ├── bot.ts           # Entry point utama inisialisasi Client WhatsApp Web
 │   ├── controller.ts    # Logika alur percakapan bot (State Machine)
+│   ├── finance.ts       # Manajemen pencatatan pemasukan dan pengeluaran
 │   ├── pdf.ts           # Logika pembuatan file PDF dengan PDFKit (dinamis tema & profil)
 │   ├── session.ts       # Manajemen sesi pengguna dan deteksi masa kedaluwarsa (inactivity)
 │   ├── settings.ts      # Manajemen penyimpanan konfigurasi profil toko & tema per pengguna
 │   └── utils.ts         # Parser teks harga, diskon, dan pajak
 ├── tests/
 │   ├── controller.test.ts
+│   ├── finance.test.ts
 │   ├── pdf.test.ts
 │   ├── session.test.ts
 │   └── utils.test.ts
 ├── invoices/            # Tempat penyimpanan sementara file PDF invoice hasil generate
-├── data/                # Database JSON lokal tempat menyimpan konfigurasi pengguna
+├── data/                # Database JSON lokal tempat menyimpan konfigurasi pengguna & catatan keuangan
 ├── package.json
 └── tsconfig.json
-```
