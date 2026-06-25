@@ -81,6 +81,23 @@ Sebelum menjalankan aplikasi, pastikan Anda telah menginstal:
 4. Bot akan menampilkan ringkasan rincian invoice hasil kalkulasi otomatis (Subtotal, Diskon, Pajak, Total Akhir, Jumlah Dibayar, Sisa Tagihan, serta Status Pembayaran).
 5. Ketik **`ya`** untuk mengonfirmasi. Bot akan membuat invoice PDF menggunakan data profil toko serta warna tema pilihan Anda, lengkap dengan status **LUNAS** atau **BELUM LUNAS**, lalu mengirimkannya dalam bentuk dokumen dan otomatis menghapus file sementara dari disk server.
 6. Ketik **`/batal`** kapan saja untuk membatalkan proses pembuatan invoice atau keluar dari menu pengaturan yang sedang berjalan.
+## Pencatatan Keuangan (`/pemasukan`, `/pengeluaran`, `/laporan`)
+
+Bot ini menyediakan fitur sederhana untuk mencatat arus kas masuk dan keluar secara harian:
+
+1. **Mencatat Transaksi**:
+   Ketik **`/pemasukan`** atau **`/pengeluaran`** untuk memulai pencatatan.
+   *   Bot akan meminta nominal (jumlah uang).
+   *   Bot akan meminta kategori (misal: `Penjualan`, `Makan`, `Transport`).
+   *   Bot akan meminta catatan singkat (opsional).
+2. **Melihat Laporan**:
+   Ketik **`/laporan`** untuk melihat ringkasan keuangan bulan berjalan, yang mencakup:
+   *   Total Pemasukan
+   *   Total Pengeluaran
+   *   Saldo Bersih (Total Pemasukan - Total Pengeluaran)
+
+---
+
 
 ---
 
