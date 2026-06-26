@@ -198,3 +198,38 @@ export function parseSettingsTemplate(text: string): ParsedSettingsInput {
 
   return result;
 }
+
+export interface ParsedFinanceInput {
+  amount?: number;
+  category?: string;
+  note?: string;
+}
+
+/**
+ * Parses the finance template text submitted by the user.
+ */
+export function parseFinanceTemplate(text: string): ParsedFinanceInput {
+  const lines = text.split('\n');
+  const result: ParsedFinanceInput = {};
+
+  for (let line of lines) {
+    line = line.trim();
+    if (!line) continue;
+
+    const lowerLine = line.toLowerCase();
+
+    if (lowerLine.startsWith('nominal:')) {
+      const amountStr = line.slice('nominal:'.length).trim();
+      const amount = parsePriceAdvanced(amountStr);
+      if (!isNaN(amount) && amount > 0) {
+        result.amount = amount;
+      }
+    } else if (lowerLine.startsWith('kategori:')) {
+      result.category = line.slice('kategori:'.length).trim();
+    } else if (lowerLine.startsWith('catatan:')) {
+      result.note = line.slice('catatan:'.length).trim();
+    }
+  }
+
+  return result;
+}

@@ -3,7 +3,8 @@ import {
   parsePriceAdvanced, 
   parseDiscountOrTax, 
   parseInvoiceTemplate, 
-  parseSettingsTemplate 
+  parseSettingsTemplate,
+  parseFinanceTemplate
 } from './utils.js';
 import { generateInvoicePdf, type InvoiceData } from './pdf.js';
 import { SettingsManager } from './settings.js';
@@ -75,11 +76,19 @@ export class InvoiceBotController {
         await reply('⚠️ Sesi pembuatan invoice sedang aktif. Selesaikan invoice Anda terlebih dahulu, atau ketik */batal* untuk membatalkan.');
         return;
       }
+      const isIncome = textLower === '/pemasukan';
+      const typeLabel = isIncome ? 'Pemasukan' : 'Pengeluaran';
       this.sessionManager.updateSession(userId, { 
-        step: 'waiting_finance_amount', 
-        financeType: textLower === '/pemasukan' ? 'income' : 'expense' 
+        step: 'waiting_finance_template', 
+        financeType: isIncome ? 'income' : 'expense' 
       });
-      await reply(`Masukkan nominal ${textLower === '/pemasukan' ? 'Pemasukan' : 'Pengeluaran'}:`);
+      await reply(
+        `*=== Catat ${typeLabel} ===*\n\n` +
+        `Silakan salin, isi, dan kirim kembali template di bawah ini:\n\n` +
+        `Nominal: \n` +
+        `Kategori: ${isIncome ? 'Penjualan / Lainnya' : 'Bahan Baku / Operasional / Makan'}\n` +
+        `Catatan: `
+      );
       return;
     }
 
@@ -223,30 +232,22 @@ export class InvoiceBotController {
         break;
       }
 
-      case 'waiting_finance_amount': {
-        const amount = parsePriceAdvanced(text);
-        if (isNaN(amount) || amount <= 0) {
-          await reply('⚠️ Nominal tidak valid. Masukkan angka yang lebih besar dari 0.');
+      case 'waiting_finance_template': {
+        const parsed = parseFinanceTemplate(text);
+        if (!parsed.amount || parsed.amount <= 0) {
+          await reply('⚠️ Nominal tidak valid. Pastikan format Nominal diisi dengan angka.');
           return;
         }
-        this.sessionManager.updateSession(userId, { step: 'waiting_finance_category', financeAmount: amount });
-        await reply('Masukkan kategori (misal: Penjualan, Makan, Transport):');
-        break;
-      }
+        if (!parsed.category) {
+          await reply('⚠️ Kategori wajib diisi. Silakan isi kembali template dengan lengkap.');
+          return;
+        }
 
-      case 'waiting_finance_category': {
-        this.sessionManager.updateSession(userId, { step: 'waiting_finance_note', financeCategory: text });
-        await reply('Masukkan catatan singkat (opsional):');
-        break;
-      }
-
-      case 'waiting_finance_note': {
-        const note = text;
-        const { financeType, financeAmount, financeCategory } = session;
-        if (financeType && financeAmount !== undefined && financeCategory) {
-          this.financeManager.addRecord(userId, financeType, financeAmount, financeCategory, note);
+        const { financeType } = session;
+        if (financeType) {
+          this.financeManager.addRecord(userId, financeType, parsed.amount, parsed.category, parsed.note || '');
           this.sessionManager.clearSession(userId);
-          await reply(`✓ Catatan *${financeType === 'income' ? 'Pemasukan' : 'Pengeluaran'}* berhasil disimpan.`);
+          await reply(`✓ Catatan *${financeType === 'income' ? 'Pemasukan' : 'Pengeluaran'}* sebesar Rp ${parsed.amount.toLocaleString('id-ID')} berhasil disimpan.`);
         } else {
           this.sessionManager.clearSession(userId);
           await reply('⚠️ Terjadi kesalahan data keuangan. Sesi dibatalkan.');

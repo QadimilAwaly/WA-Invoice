@@ -73,16 +73,6 @@ client.on('message_create', async (msg) => {
     return;
   }
 
-  // Resolve the canonical JID of the contact
-  let contactJid = userId;
-  try {
-    const contact = await msg.getContact();
-    contactJid = contact.id._serialized;
-    console.log(`[CHAT] Resolved Contact JID: ${contactJid}`);
-  } catch (contactErr) {
-    console.error('[ERROR] Gagal mendapatkan detail kontak:', contactErr);
-  }
-
   // If the message was sent by ourselves, only process if it is a self-chat
   const myJid = client.info?.wid?._serialized;
   if (msg.fromMe && myJid && msg.to !== myJid) {
@@ -90,8 +80,17 @@ client.on('message_create', async (msg) => {
     return;
   }
 
-  console.log(`[CHAT] Memproses pesan dari: ${userId} (Contact: ${contactJid})`);
+  // Resolve the canonical JID of the contact
+  let contactJid = userId;
+  try {
+    const contact = await msg.getContact();
+    contactJid = contact.id._serialized;
+    console.log(`[CHAT] Resolved Contact JID: ${contactJid}`);
+  } catch (contactErr: any) {
+    console.error(`[ERROR] Gagal mendapatkan detail kontak: ${contactErr.message || contactErr}`);
+  }
 
+  console.log(`[CHAT] Memproses pesan dari: ${userId} (Contact: ${contactJid})`);
   try {
     await controller.handleMessage(userId, body, async (replyText, mediaPath) => {
       console.log(`[CHAT] Mengirim Balasan ke: ${userId} | Teks: "${replyText.substring(0, 60)}..." | Lampiran: ${mediaPath || 'Tidak ada'}`);

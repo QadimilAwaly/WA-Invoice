@@ -183,18 +183,14 @@ async function runTests() {
   replies.length = 0; // Ensure replies are cleared before starting Step 17
   // Step 17: Finance Tracking Test
   await controller.handleMessage(userId, "/pemasukan", replyFn);
-  if (!replies[0].text.includes("Masukkan nominal Pemasukan")) {
-    console.error("FAIL: Expected Pemasukan prompt, got:", replies[0].text);
+  if (!replies[0].text.includes("Catat Pemasukan")) {
+    console.error("FAIL: Expected Pemasukan template prompt, got:", replies[0].text);
     process.exit(1);
   }
   replies.length = 0;
 
-  await controller.handleMessage(userId, "1000000", replyFn);
-  replies.length = 0;
-  await controller.handleMessage(userId, "Gaji", replyFn); // Category
-  replies.length = 0;
-  await controller.handleMessage(userId, "Gaji Juni", replyFn); // Note
-  if (!replies[0].text.includes("✓ Catatan *Pemasukan* berhasil disimpan")) {
+  await controller.handleMessage(userId, "Nominal: 1000000\nKategori: Gaji\nCatatan: Gaji Juni", replyFn);
+  if (!replies[0].text.includes("✓ Catatan *Pemasukan* sebesar Rp 1.000.000 berhasil disimpan")) {
     console.error("FAIL: Expected finance success message, got:", replies[0].text);
     process.exit(1);
   }

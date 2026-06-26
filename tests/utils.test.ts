@@ -1,4 +1,4 @@
-import { parsePriceAdvanced, parseDiscountOrTax, parseInvoiceTemplate, parseSettingsTemplate } from '../src/utils.js';
+import { parsePriceAdvanced, parseDiscountOrTax, parseInvoiceTemplate, parseSettingsTemplate, parseFinanceTemplate } from '../src/utils.js';
 
 function runTests() {
   const priceTestCases = [
@@ -105,6 +105,18 @@ function runTests() {
     console.log("PASS: parseSettingsTemplate valid input");
   }
 
+  console.log("\nRunning parseFinanceTemplate tests...");
+  const financeTemplate = `Nominal: Rp 150.000
+Kategori: Makan Malam
+Catatan: McD
+Abaikan Ini: Harus diabaikan`;
+  const parsedFinance = parseFinanceTemplate(financeTemplate);
+  if (parsedFinance.amount !== 150000 || parsedFinance.category !== "Makan Malam" || parsedFinance.note !== "McD") {
+    console.error("FAIL: parseFinanceTemplate valid input failed", parsedFinance);
+    process.exit(1);
+  }
+  console.log("PASS: parseFinanceTemplate valid input");
+
   if (passed) {
     console.log("\nAll tests passed successfully!");
   } else {
@@ -113,3 +125,4 @@ function runTests() {
 }
 
 runTests();
+

@@ -2,10 +2,7 @@ export type SessionStep =
   | 'idle'
   | 'waiting_invoice_template'
   | 'waiting_setting_template'
-  | 'waiting_finance_type'
-  | 'waiting_finance_amount'
-  | 'waiting_finance_category'
-  | 'waiting_finance_note'
+  | 'waiting_finance_template'
   | 'confirm';
 export interface InvoiceItem {
   name: string;
